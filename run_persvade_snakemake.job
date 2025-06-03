@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --mail-user=jjhale@umich.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --export=ALL
+#SBATCH --partition=standard
+#SBATCH --account=esnitkin1
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=15g
+#SBATCH --time=05:00:00
+
+module load Bioinformatics snakemake singularity
+snakemake -s workflow/persvade_v1.smk -p --configfile config/config.yaml --profile ./profile/
+
+
