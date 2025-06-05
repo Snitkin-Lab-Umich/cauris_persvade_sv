@@ -4,19 +4,20 @@
 samples: config/samples.csv
 
 # Path to your raw sequencing reads (do not end this path with '/')
-short_reads: input/UM_Caur_10
+short_reads: input/UM_Caur_1
 # format for this path:
 # short_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/[batch_name]
 
 # Path to the reference sequence to use for this run:
-reference: reference/b8441/b8441.fasta
+reference: reference/UM_Caur_1/UM_Caur_1.scaffolds.fasta
 # If you are using an existing reference directory, format the path like this:
 # reference/{file_name}/{file_name}.fasta
 # example:
 # reference/b8441/b8441.fasta
+# this must end with '.fasta'!
 
 # Location of mitochondrial chromosome:
-mito_chr: no_mitochondria
+mito_chr: scaffold_8
 # persvade needs to know the location of the mitochondrial chromosome in your assembly, if there is one.
 # If there isn't one, put "no_mitochondria" here
 # example (no mitochondrial genome):

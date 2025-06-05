@@ -3,7 +3,7 @@ import os
 
 configfile: "config/config.yaml"
 
-SAMPLE = ['UM_Caur_10']
+SAMPLE = ['UM_Caur_1']
 
 # prepare reference directory
 def prep_reference(ref_file):
