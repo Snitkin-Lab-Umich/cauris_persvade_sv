@@ -4,12 +4,12 @@
 samples: config/samples.csv
 
 # Path to your raw sequencing reads (do not end this path with '/')
-short_reads: input/UM_Caur_1
+short_reads: input/Chi_Caur_3
 # format for this path:
 # short_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/[batch_name]
 
 # Path to the reference sequence to use for this run:
-reference: reference/UM_Caur_1/UM_Caur_1.scaffolds.fasta
+reference: reference/Chi_Caur_3/Chi_Caur_3.scaffolds.fasta
 # If you are using an existing reference directory, format the path like this:
 # reference/{file_name}/{file_name}.fasta
 # example:
