@@ -1,23 +1,26 @@
 import subprocess
+import pandas as pd
 import os
 
 configfile: "config/config.yaml"
 
-SAMPLE = ['Chi_Caur_3']
+samples_df = pd.read_csv(config["samples"])
+SAMPLE = list(samples_df['sample_id'])
 
 # prepare reference directory
+# note that difference reference genomes are not supported yet - the reference must be the same for all samples!
 def prep_reference(ref_file):
     ref_name = ref_file.split('/')[-1].split('.fa')[0]
     ref_path = f'results/reference/{ref_name}/'
     new_ref_file = f'results/reference/{ref_name}/{ref_name}.fasta'
-    print(f'The reference used for this run is {ref_name}, located at {ref_file}')
+    print(f'The reference used for ALL samples in this run is {ref_name}, located at {ref_file}')
     if not os.path.exists(ref_path):
         subprocess.call(['mkdir','-p',ref_path])
         subprocess.call(['cp',ref_file,new_ref_file])
         print(f'A new reference directory has been created at {ref_path}')
     else:
         print('Using existing reference files at this location!')
-    print('Remember to check the mitochondrial chromosome location in config/config.yaml')
+    print('Remember to check the reference genome mitochondrial chromosome location in config/config.yaml')
     return([new_ref_file,ref_path])
 
 # this will copy the provided reference to a new directory (assuming it's not already there)
@@ -25,7 +28,7 @@ REFERENCE,REF_DIR = prep_reference(config["reference"])
 
 rule all:
     input:
-        call_svs = expand("results/{sample}/call_SVs/perSVade_finished_file.txt",sample=SAMPLE),
+        call_svs = expand("results/{sample}/call_SVs/perSVade_finished_vaf_file.txt",sample=SAMPLE),
 
 rule ref_infer_repeats:
     input:
@@ -175,4 +178,23 @@ rule step4_call_svs:
         --replace --verbose --fraction_available_mem {params.fraction_available_mem} --threads {threads}
         set -u
         """
+
+
+rule step5_vaf:
+    input:
+        call_svs = "results/{sample}/call_SVs/perSVade_finished_file.txt",
+    output:
+        vaf_file = "results/{sample}/call_SVs/perSVade_finished_vaf_file.txt",
+    params:
+        outdir = "results/{sample}/call_SVs/",
+        fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
+    resources:
+        mem_mb=3000,
+        runtime=20,
+    threads: 1
+    shell:
+        """
+        python /scripts/calculate_vaf.py --input {params.outdir}
+        """
+
 

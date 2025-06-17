@@ -4,7 +4,7 @@
 samples: config/samples.csv
 
 # Path to your raw sequencing reads (do not end this path with '/')
-short_reads: input/Chi_Caur_3
+short_reads: input/clade4_v1
 # format for this path:
 # short_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/[batch_name]
 
@@ -15,8 +15,13 @@ reference: reference/Chi_Caur_3/Chi_Caur_3.scaffolds.fasta
 # example:
 # reference/b8441/b8441.fasta
 # this must end with '.fasta'!
+# Here are the reference genomes I've been using for each clade:
+# Clade I: B8441 version 3
+# Clade III: UM_Caur_4 hybrid assembly
+# Clade IV: Chi_Caur_3 hybrid assembly
 
-# Location of mitochondrial chromosome:
+
+# Location of mitochondrial chromosome in the reference genome:
 mito_chr: scaffold_8
 # persvade needs to know the location of the mitochondrial chromosome in your assembly, if there is one.
 # If there isn't one, put "no_mitochondria" here

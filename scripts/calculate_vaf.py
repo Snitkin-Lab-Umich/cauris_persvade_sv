@@ -1,6 +1,6 @@
 import os
 import argparse
-
+import subprocess
 
 def read_gridss_info(vcf):
     """Read the INFO field from a GRIDSS VCF file and return a dictionary."""
@@ -110,6 +110,7 @@ def main():
     if not os.path.exists(args.gridss):
         raise FileNotFoundError(f'GRIDSS VCF file {args.gridss} not found. Please provide a valid path.')
     sv_file_iter(sv_file_list,args.gridss)
+    subprocess.call(['touch', os.path.join(args.input, 'perSVade_finished_vaf_file.txt')])
 
 if __name__ == "__main__":
     main()
