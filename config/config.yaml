@@ -4,12 +4,13 @@
 samples: config/samples.csv
 
 # Path to your raw sequencing reads (do not end this path with '/')
-short_reads: input/clade4_v1
+short_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/clean_fastq_qc_pass_samples
 # format for this path:
 # short_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/[batch_name]
 
 # Path to the reference sequence to use for this run:
-reference: reference/Chi_Caur_3/Chi_Caur_3.scaffolds.fasta
+reference_fasta: reference/b8441/b8441.fasta
+reference_gff: reference/b8441/b8441_annotations.gff
 # If you are using an existing reference directory, format the path like this:
 # reference/{file_name}/{file_name}.fasta
 # example:
@@ -22,7 +23,7 @@ reference: reference/Chi_Caur_3/Chi_Caur_3.scaffolds.fasta
 
 
 # Location of mitochondrial chromosome in the reference genome:
-mito_chr: scaffold_8
+mito_chr: no_mitochondria
 # persvade needs to know the location of the mitochondrial chromosome in your assembly, if there is one.
 # If there isn't one, put "no_mitochondria" here
 # example (no mitochondrial genome):
@@ -33,7 +34,7 @@ mito_chr: scaffold_8
 
 # Directory prefix where the outputs will be saved to
 # Rename this to your preferred naming convention with this format: year-month-day_Project_Name_funQCD
-#prefix: 2025-05-06_ncbiPathogen_t30_v1
+prefix: cladeI_test
 
 # Change to genome size of your organism of interest 
 #genome_size: 12000000

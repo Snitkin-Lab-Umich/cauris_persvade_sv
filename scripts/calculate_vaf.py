@@ -50,14 +50,12 @@ def add_vaf_to_sv_file(sv_file, gridss_info, gridss_threshold_single=0.8, gridss
             vaf_scores = []
             for gridss_name in gridss_list:
                 if gridss_name in gridss_info:
-                    vf = int(gridss_info[gridss_name]['VF'])
-                    ref = int(gridss_info[gridss_name]['REF'])
-                    refpair = int(gridss_info[gridss_name]['REFPAIR'])
-                    if sv_length >= fragsize:
-                        vaf = round(vf / (vf + ref + refpair),3)
-                    else:
-                        vaf = round(vf / (vf + ref),3)
-                    vaf_scores.append(vaf)
+                    # add the VAF of the GRIDSS name directly provided by persvade
+                    vaf_scores.append(calculate_vaf(gridss_name, gridss_info, sv_length, fragsize))
+                    if gridss_info[gridss_name].get('MATEID') is not None:
+                        # if the MATEID is present, add its VAF as well
+                        # these should be similar values
+                        vaf_scores.append(calculate_vaf(gridss_info[gridss_name]['MATEID'], gridss_info, sv_length, fragsize))
                 else:
                     print(f'Warning: GRIDSS name {gridss_name} not found in GRIDSS info. Setting VAF to 0.')
                     vaf_scores.append(0.0)
@@ -71,6 +69,16 @@ def add_vaf_to_sv_file(sv_file, gridss_info, gridss_threshold_single=0.8, gridss
             # write the line to the new file
             vaf_scores_str = [str(v) for v in vaf_scores]
             fh_out.write('\t'.join(line) + f'\t{"+".join(vaf_scores_str)}\t{qc_eval}\n')
+
+def calculate_vaf(gridss_name, gridss_info, sv_length, fragsize):
+    vf = int(gridss_info[gridss_name]['VF'])
+    ref = int(gridss_info[gridss_name]['REF'])
+    refpair = int(gridss_info[gridss_name]['REFPAIR'])
+    if sv_length >= fragsize:
+        vaf = round(vf / (vf + ref + refpair),3)
+    else:
+        vaf = round(vf / (vf + ref),3)
+    return(vaf)
 
 # remember to read the vcf info only once, not for each SV
 def sv_file_iter(sv_file_list, vcf_file):
@@ -110,7 +118,9 @@ def main():
     if not os.path.exists(args.gridss):
         raise FileNotFoundError(f'GRIDSS VCF file {args.gridss} not found. Please provide a valid path.')
     sv_file_iter(sv_file_list,args.gridss)
-    subprocess.call(['touch', os.path.join(args.input, 'perSVade_finished_vaf_file.txt')])
+    #subprocess.call(['touch', os.path.join(args.input, 'vaf_finished.txt')])
+    with open(os.path.join(args.input, 'vaf_finished.txt'), 'w') as fh:
+        fh.write('VAF calculation finished.\n')
 
 if __name__ == "__main__":
     main()
