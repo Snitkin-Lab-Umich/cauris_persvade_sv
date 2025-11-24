@@ -34,13 +34,13 @@ def add_vaf_to_sv_file(sv_file, gridss_info, gridss_threshold_single=0.8, gridss
             # extract the GRIDSS names and SV length, depending on the SV type
             if sv_type in ['deletions','inversions','tandemDuplications']:
                 # these have TWO columns for start and end
-                sv_length = abs(int(line[1]) - int(line[2]))
+                sv_length = abs(int(float(line[1])) - int(float(line[2])))
                 gridss_list = line[3].split('+')
             elif sv_type in ['insertions','translocations']:
                 # these have FOUR columns for start and end
                 # both lengths should be comparable, so the shorter one is taken
-                sv_length1 = abs(int(line[1]) - int(line[2]))
-                sv_length2 = abs(int(line[4]) - int(line[5]))
+                sv_length1 = abs(int(float(line[1])) - int(float(line[2])))
+                sv_length2 = abs(int(float(line[4])) - int(float(line[5])))
                 if sv_length1/sv_length2 > 1.5 or sv_length2/sv_length1 > 1.5:
                     # if the lengths differ too much, print a warning
                     print(f'Warning: Differing lengths for {sv_type} found: {sv_length1} vs {sv_length2}. Using the shorter one.')

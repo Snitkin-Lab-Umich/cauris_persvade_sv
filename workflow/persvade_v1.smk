@@ -5,18 +5,20 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 samples_df = pd.read_csv(config['samples'],sep = '\t')
-SAMPLE = samples_df['Sample'].tolist()
+# subset this df to only the samples that match the clade provided in config
+samples_df_subset = samples_df[samples_df['auriclass_clade'] == config['clade']]
+SAMPLE = samples_df_subset['Sample'].tolist()
 
 PREFIX = config["prefix"]
 
 # prepare reference directory
 def prep_reference(ref_fasta, ref_gff):
-    ref_name = ref_fasta.split('/')[-1].split('.fa')[0]
+    ref_name = ref_fasta.split('/')[-1].split('.scaffolds.fa')[0]
     ref_path = f'results/reference/{ref_name}/'
     new_ref_fasta = f'results/reference/{ref_name}/{ref_name}.fasta'
     new_ref_gff = f'results/reference/{ref_name}/{ref_name}.gff'
     print(f'The reference used for this run is {ref_name}, located at {ref_fasta}')
-    if not os.path.exists(new_ref_path) or not os.path.exists(new_ref_gff):
+    if not os.path.exists(new_ref_fasta) or not os.path.exists(new_ref_gff):
         subprocess.call(['mkdir','-p',ref_path])
         subprocess.call(['cp',ref_fasta,new_ref_fasta])
         subprocess.call(['cp',ref_gff,new_ref_gff])
@@ -31,13 +33,14 @@ REFERENCE,REF_GFF,REF_DIR = prep_reference(config["reference_fasta"],config["ref
 
 rule all:
     input:
-        annotate = expand("results/{prefix}/{sample}/annotate_SVs/annotated_variants.tab",sample=SAMPLE),
+        annotate = expand("results/{prefix}/{sample}/annotate_SVs/annotated_variants.tab",sample=SAMPLE,prefix=PREFIX),
+        vaf_file = expand("results/{prefix}/{sample}/call_SVs/vaf_finished.txt",sample=SAMPLE,prefix=PREFIX),
 
 # the qc step should not be necessary, since we run trimmomatic and qc during the assembly and annotation
 # rule step1_qc:
 #     input:
-#         r1 = config["short_reads"] + "/" + "{sample}_R1_trim_paired.fastq.gz",
-#         r2 = config["short_reads"] + "/" + "{sample}_R2_trim_paired.fastq.gz",
+#         r1 = config["short_reads"] + "/" + "{sample}_R1.fastq.gz",
+#         r2 = config["short_reads"] + "/" + "{sample}_R2.fastq.gz",
 #     output:
 #         r1trim = "results/{prefix}/{sample}/misc/trimmed_reads/trimmed_reads1.fastq.gz",
 #         r2trim = "results/{prefix}/{sample}/misc/trimmed_reads/trimmed_reads2.fastq.gz",
@@ -64,16 +67,20 @@ rule step2_align:
     input:
         r1 = config["trimmed_reads"] + "/" + "{sample}_R1_trim_paired.fastq.gz",
         r2 = config["trimmed_reads"] + "/" + "{sample}_R2_trim_paired.fastq.gz",
+        #trim_finish = "results/{prefix}/{sample}/misc/trimmed_reads/perSVade_finished_file.txt",
     output:
         aligned_reads = "results/{prefix}/{sample}/misc/aligned_reads/aligned_reads.bam.sorted",
     params:
+        #r1trim = "results/{prefix}/{sample}/misc/trimmed_reads/trimmed_reads1.fastq.gz",
+        #r2trim = "results/{prefix}/{sample}/misc/trimmed_reads/trimmed_reads2.fastq.gz",
         outdir = "results/{prefix}/{sample}/misc/aligned_reads/",
         ref = REFERENCE,
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
         mem_mb=15000,
-        runtime=360,
+        runtime=600,
     threads: 4
+    priority: 100
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
     shell:
@@ -81,7 +88,7 @@ rule step2_align:
         set +u
         source /opt/conda/etc/profile.d/conda.sh
         conda activate perSVade_env
-        python /perSVade/scripts/perSVade align_reads -f1 {input.r1trim} -f2 {input.r2trim} --ref {params.ref} -o {params.outdir} \
+        python /perSVade/scripts/perSVade align_reads -f1 {input.r1} -f2 {input.r2} --ref {params.ref} -o {params.outdir} \
         --replace --verbose --fraction_available_mem {params.fraction_available_mem} --threads {threads}
         set -u
         """
@@ -115,6 +122,47 @@ rule step3_repeats:
 # If possible, this rule should be run with a single high-quality sample before running the full pipeline
 # The output from a single run will be placed in the reference/parameter_optimization/ directory and can be re-used in future runs
 # Note that this uses random SV simulations (as per the persvade FAQ) and assumes a haploid genome
+
+# this is a version of the optimization step that has the full resources
+# rule step4_optimize_params:
+#     input:
+#         repeats = REF_DIR + 'repeat_inference/combined_repeats.tab',
+#         aligned_reads = "results/{prefix}/{sample}/misc/aligned_reads/aligned_reads.bam.sorted",
+#     output:
+#         check_file = "results/{prefix}/{sample}/misc/parameter_optimization/optp.txt",
+#     params:
+#         opt_params_dir = REF_DIR + 'parameter_optimization/',
+#         opt_params = REF_DIR + 'parameter_optimization/optimized_parameters.json',
+#         note_file = REF_DIR + 'parameter_optimization/{sample}_used_for_optimization.txt',
+#         ref = REFERENCE,
+#         mito_chr = config["mito_chr"],
+#         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
+#     resources:
+#         mem_mb=15000,
+#         runtime=480,
+#     threads: 4
+#     singularity:
+#         "docker://mikischikora/persvade:v1.02.6"
+#     shell:
+#         """
+#         set +u
+#         if [ -e {params.opt_params} ];
+#         then
+#             touch {output.check_file}
+#         else
+#             source /opt/conda/etc/profile.d/conda.sh
+#             conda activate perSVade_env
+#             mkdir -p {params.opt_params_dir}
+#             python /perSVade/scripts/perSVade optimize_parameters --ref {params.ref} -o {params.opt_params_dir} -sbam {input.aligned_reads} --repeats_file {input.repeats} \
+#             --mitochondrial_chromosome {params.mito_chr} --regions_SVsimulations random --simulation_ploidies haploid \
+#             --replace --verbose --fraction_available_mem {params.fraction_available_mem} --threads {threads}
+#             touch {params.note_file}
+#             touch {output.check_file}
+#         fi
+#         set -u
+#         """
+
+# this is a version of the optimization step that has minimal resources, for use after optimization is done
 rule step4_optimize_params:
     input:
         repeats = REF_DIR + 'repeat_inference/combined_repeats.tab',
@@ -129,9 +177,9 @@ rule step4_optimize_params:
         mito_chr = config["mito_chr"],
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
-        mem_mb=15000,
-        runtime=480,
-    threads: 4
+        mem_mb=5000,
+        runtime=30,
+    threads: 1
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
     shell:
@@ -153,6 +201,9 @@ rule step4_optimize_params:
         set -u
         """
 
+
+
+
 # This step will automatically use optimized parameter files found in the reference folder!
 rule step5_1_call_svs:
     input:
@@ -168,8 +219,8 @@ rule step5_1_call_svs:
         mito_chr = config["mito_chr"],
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
-        mem_mb=10000,
-        runtime=60,
+        mem_mb=20000,
+        runtime=720,
     threads: 4
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
@@ -220,7 +271,7 @@ rule step6_call_cnvs:
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
         mem_mb=10000,
-        runtime=60,
+        runtime=300,
     threads: 4
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
@@ -255,7 +306,7 @@ rule step7_integrate:
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
         mem_mb=10000,
-        runtime=60,
+        runtime=240,
     threads: 4
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
@@ -289,7 +340,7 @@ rule step8_annotate:
         fraction_available_mem = lambda wildcards, resources: round((resources.mem_mb/1000)/175 - 0.005,2),
     resources:
         mem_mb=10000,
-        runtime=60,
+        runtime=240,
     threads: 4
     singularity:
         "docker://mikischikora/persvade:v1.02.6"
@@ -299,7 +350,7 @@ rule step8_annotate:
         source /opt/conda/etc/profile.d/conda.sh
         conda activate perSVade_env
         python /perSVade/scripts/perSVade annotate_SVs --ref {params.ref} -gff {params.ref_gff} -o {params.outdir} \
-        --SV_CNV_vcf {input.integrate} --gcode {params.gcode} --mcode {params.mcode} \
+        --SV_CNV_vcf {input.integrate} -gcode {params.gcode} -mcode {params.mcode} \
         --mitochondrial_chromosome {params.mito_chr} \
         --replace --verbose --fraction_available_mem {params.fraction_available_mem} --threads {threads}
         set -u

@@ -12,7 +12,7 @@ nolock: True
 cores: 8
 # make sure this is equal to the memory provided in config/config.yaml
 #resources: mem_mb=32000
-jobs: 10
+jobs: 20
 max-jobs-per-second: 1
 max-status-checks-per-second: 1
 

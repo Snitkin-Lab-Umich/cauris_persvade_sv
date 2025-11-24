@@ -1,24 +1,30 @@
 # Configuration settings for Snakemake
 
 # Relative path where your samples are found
+# this must have one column named 'Sample' with the sample names matching the fastq files
+# it also must have a column named 'auriclass_clade' with the clade information for each sample
 samples: config/samples.csv
 
+# this should match the clade of the reference you are using
+# only samples from this clade will be analyzed in this run
+clade: 'Clade I'
+
 # name of this run
-prefix: 2025-07-17_persvade
+prefix: 2025-11-14_persvade_cladeI
 
 # Path to your trimmed sequencing reads (do not end this path with '/')
-trimmed_reads: /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/clean_fastq_qc_pass_samples
+trimmed_reads: copied_reads_dir/trimmed_reads
 
 # Path to the reference sequence to use for this run:
-reference_fasta: reference/UM_Caur_1/UM_Caur_1.scaffolds.fa
-reference_gff: reference/UM_Caur_1/UM_Caur_1.scaffolds.gff
+reference_fasta: clade_reference_files/UM_Caur_1/UM_Caur_1.scaffolds.fa
+reference_gff: clade_reference_files/UM_Caur_1/UM_Caur_1.gff3
 # If you are using an existing reference directory, format the path like this:
 # reference/{file_name}/{file_name}.fasta
 # example:
 # reference/b8441/b8441.fasta
 
 # Location of mitochondrial chromosome:
-mito_chr: no_mitochondria
+mito_chr: scaffold_8
 # persvade needs to know the location of the mitochondrial chromosome in your assembly, if there is one.
 # If there isn't one, put "no_mitochondria" here
 # example (no mitochondrial genome):
@@ -58,17 +64,17 @@ mcode: 4
 # Change according to your sequence type
 # If your adapter file is not present in the adapter directory, 
 # Please add the appropriate file to the adapters folder
-# adapter_file: config/adapters/combined_Adaptors.fa
-# seed_mismatches: 2
-# palindrome_clipthreshold: 30
-# simple_clipthreshold: 10
-# minadapterlength: 8
-# keep_both_reads: true
-# window_size: 4
-# window_size_quality: 20
-# minlength: 40
-# headcrop_length: 0
-# lead_trail_qual: 3
+adapter_file: config/adapters/combined_Adaptors.fa
+seed_mismatches: 2
+palindrome_clipthreshold: 30
+simple_clipthreshold: 10
+minadapterlength: 8
+keep_both_reads: true
+window_size: 4
+window_size_quality: 20
+minlength: 40
+headcrop_length: 0
+lead_trail_qual: 3
 
 # Optional to change this unless you have a kraken database of your own
 #kraken_db: /nfs/esnitkin/bin_group/database/k2_standard_20230605/

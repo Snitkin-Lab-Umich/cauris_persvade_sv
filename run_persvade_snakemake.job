@@ -4,13 +4,61 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --export=ALL
 #SBATCH --partition=standard
-#SBATCH --account=esnitkin3
+#SBATCH --account=esnitkin1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=5g
-#SBATCH --time=24:00:00
+#SBATCH --time=02:00:00
 
-module load Bioinformatics snakemake singularity
-snakemake -s workflow/persvade_v1.smk -p --configfile config/config.yaml --profile ./profile/
+
+# create a single directory containing the trimmed and raw reads to be used as input
+# python scripts/create_trim_samples.py --input config/samples.csv --output copied_reads_dir \
+# --trimmed_reads_dirs /nfs/turbo/umms-esnitkin/Project_Cauris/Sequence_data/illumina_fastq/clean_fastq_qc_pass_samples/ \
+# /nfs/turbo/umms-esnitkin/Project_Cauris/Public_datasets/2025-07-10_MDHHS/illumina/clean_fastq_qc_pass_samples/ \
+# --raw_reads_dirs /nfs/turbo/umms-esnitkin/Project_Cauris/Public_datasets/2025-07-10_MDHHS/illumina/2025-08-11_mdhhs_all_samples_batch1/passed_qc_samples/ \
+# /nfs/turbo/umms-esnitkin/Project_Cauris/Public_datasets/2025-07-10_MDHHS/illumina/2025-08-11_mdhhs_all_batch2_400/passed_qc_samples/ \
+# /nfs/turbo/umms-esnitkin/Project_Cauris/Public_datasets/2025-07-10_MDHHS/illumina/2025-08-11_mdhhs_all_batch3_final_400/passed_qc_samples/
+
+# run a simple snakemake pipeline to trim any raw reads
+# snakemake -s workflow/re-trim_reads.smk -p --configfile config/config.yaml --profile ./profile/ 
+
+# copy the clade-specific reference files to a new directory
+#cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_gff/UM_Caur_1.gff3 \
+#clade_reference_files/UM_Caur_1/UM_Caur_1.gff3
+#cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_nucleotide_fasta/UM_Caur_1.scaffolds.fa \
+#clade_reference_files/UM_Caur_1/UM_Caur_1.scaffolds.fa
+
+# run the snakemake pipeline using UM_Caur_1 as the reference and UM_Caur_2 as the input
+# config.yaml was edited to use samples_cladeI_opt.csv for this run
+#module load Bioinformatics snakemake singularity
+#snakemake -s workflow/persvade_v1.smk -p --configfile config/config.yaml --profile ./profile/ --until step4_optimize_params
+
+# run the full persvade snakemake pipeline
+# (remember to change config.yaml to use the full samples_cladeI.csv file again)
+# module load Bioinformatics snakemake singularity
+# snakemake -s workflow/persvade_v1.smk -p --configfile config/config.yaml --profile ./profile/ --rerun-triggers mtime
+
+# run only the vaf summary script
+# python scripts/extract_vaf.py --input results/2025-11-14_persvade_cladeI/ --output results/2025-11-14_persvade_cladeI/vaf_summary_all_cladeI.csv
+
+
+
+# copy the clade-specific reference files to a new directory
+# cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_gff/UM_Caur_4.gff3 \
+# clade_reference_files/UM_Caur_4/UM_Caur_4.gff3
+# cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_nucleotide_fasta/UM_Caur_4.scaffolds.fa \
+# clade_reference_files/UM_Caur_4/UM_Caur_4.scaffolds.fa
+
+# cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_gff/Chi_Caur_3.gff3 \
+# clade_reference_files/Chi_Caur_3/Chi_Caur_3.gff3
+# cp /nfs/turbo/umms-esnitkin/Project_Cauris/Analysis/2024_Pipeline_testing/2025-09-25_pvo/092525_pangenome_results/original_nucleotide_fasta/Chi_Caur_3.scaffolds.fa \
+# clade_reference_files/Chi_Caur_3/Chi_Caur_3.scaffolds.fa
+
+
+
+
+
+
+
 
 
